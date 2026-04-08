@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JAMB Physics Quiz – 100 Questions</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Exo+2:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #050c1a;
+    --surface: #0a1628;
+    --card: #0f1f38;
+    --border: #1a3a6a;
+    --accent: #00c6ff;
+    --accent2: #0072ff;
+    --correct: #00e676;
+    --wrong: #ff3d6b;
+    --text: #e8f4ff;
+    --muted: #6b8cae;
+    --gold: #ffd700;
+    --glow: 0 0 20px rgba(0,198,255,0.3);
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Exo 2', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Animated background grid */
+  body::before {
+    content: '';
+    position: fixed; inset: 0; z-index: 0;
+    background-image:
+      linear-gradient(rgba(0,198,255,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,198,255,0.04) 1px, transparent 1px);
+    background-size: 40px 40px;
+    animation: gridScroll 20s linear infinite;
+    pointer-events: none;
+  }
+  @keyframes gridScroll { to { background-position: 40px 40px; } }
+
+  #app { position: relative; z-index: 1; }
+
+  /* ── START SCREEN ── */
+  #start-screen {
+    min-height: 100vh;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 2rem; text-align: center;
+  }
+  .logo-badge {
+    display: inline-flex; align-items: center; gap: .6rem;
+    background: linear-gradient(135deg, var(--accent2), var(--accent));
+    color: #fff; font-family: 'Orbitron', sans-serif;
+    font-size: .75rem; font-weight: 700; letter-spacing: .15em;
+    padding: .4rem 1rem; border-radius: 2rem; margin-bottom: 2rem;
+    box-shadow: var(--glow);
+  }
+  .start-title {
+    font-family: 'Orbitron', sans-serif;
+    font-size: clamp(2.2rem, 6vw, 4rem); font-weight: 900;
+    line-height: 1.1; margin-bottom: .6rem;
+    background: linear-gradient(135deg, #fff 30%, var(--accent));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .start-sub {
+    color: var(--muted); font-size: 1.05rem; margin-bottom: 2.5rem;
+    max-width: 420px;
+  }
+  .stats-row {
+    display: flex; gap: 1.5rem; margin-bottom: 3rem; flex-wrap: wrap; justify-content: center;
+  }
+  .stat-box {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 12px; padding: 1rem 1.5rem; text-align: center;
+    min-width: 110px;
+  }
+  .stat-box .val {
+    font-family: 'Orbitron', sans-serif; font-size: 1.8rem; font-weight: 900;
+    color: var(--accent); display: block;
+  }
+  .stat-box .lbl { font-size: .75rem; color: var(--muted); letter-spacing: .08em; text-transform: uppercase; }
+  .btn-start {
+    background: linear-gradient(135deg, var(--accent2), var(--accent));
+    color: #fff; border: none; cursor: pointer;
+    font-family: 'Orbitron', sans-serif; font-size: 1rem; font-weight: 700;
+    letter-spacing: .1em; padding: 1rem 3rem; border-radius: 50px;
+    box-shadow: var(--glow), 0 8px 32px rgba(0,114,255,.4);
+    transition: transform .2s, box-shadow .2s;
+  }
+  .btn-start:hover { transform: translateY(-3px); box-shadow: 0 0 40px rgba(0,198,255,.5), 0 12px 40px rgba(0,114,255,.5); }
+
+  /* ── QUIZ SCREEN ── */
+  #quiz-screen { display: none; min-height: 100vh; padding: 1rem; }
+
+  .quiz-header {
+    position: sticky; top: 0; z-index: 10;
+    background: rgba(5,12,26,0.95); backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    padding: .8rem 1.2rem; display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;
+  }
+  .q-counter {
+    font-family: 'Orbitron', sans-serif; font-size: .85rem; font-weight: 700;
+    color: var(--accent); white-space: nowrap;
+  }
+  .progress-bar-wrap {
+    flex: 1; height: 6px; background: var(--border); border-radius: 99px; overflow: hidden; min-width: 80px;
+  }
+  .progress-bar-fill {
+    height: 100%; border-radius: 99px;
+    background: linear-gradient(90deg, var(--accent2), var(--accent));
+    transition: width .4s cubic-bezier(.4,0,.2,1);
+  }
+  .score-live {
+    font-family: 'Orbitron', sans-serif; font-size: .85rem; font-weight: 700;
+    color: var(--gold); white-space: nowrap;
+  }
+  .timer-badge {
+    font-family: 'Orbitron', sans-serif; font-size: .85rem; font-weight: 700;
+    background: var(--card); border: 1px solid var(--border);
+    padding: .3rem .8rem; border-radius: 8px; white-space: nowrap;
+    transition: color .3s;
+  }
+  .timer-badge.urgent { color: var(--wrong); border-color: var(--wrong); animation: pulse .6s infinite; }
+  @keyframes pulse { 50% { opacity: .6; } }
+
+  .quiz-body { max-width: 760px; margin: 2rem auto; padding: 0 .5rem; }
+
+  .question-card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 20px; padding: 2rem;
+    box-shadow: 0 4px 40px rgba(0,0,0,.4);
+    animation: fadeUp .35s ease;
+  }
+  @keyframes fadeUp { from { opacity:0; transform:translateY(18px); } to { opacity:1; transform:translateY(0); } }
+
+  .topic-tag {
+    display: inline-block;
+    background: rgba(0,198,255,.1); border: 1px solid rgba(0,198,255,.25);
+    color: var(--accent); font-size: .72rem; font-weight: 600;
+    letter-spacing: .1em; text-transform: uppercase;
+    padding: .25rem .7rem; border-radius: 6px; margin-bottom: 1rem;
+  }
+  .q-text {
+    font-size: 1.1rem; font-weight: 500; line-height: 1.6;
+    margin-bottom: 1.8rem; color: var(--text);
+  }
+  .options { display: flex; flex-direction: column; gap: .75rem; }
+
+  .opt-btn {
+    background: var(--surface); border: 1.5px solid var(--border);
+    color: var(--text); border-radius: 12px;
+    padding: .9rem 1.2rem; cursor: pointer; text-align: left;
+    font-family: 'Exo 2', sans-serif; font-size: .95rem;
+    transition: background .2s, border-color .2s, transform .15s;
+    display: flex; align-items: center; gap: .8rem;
+  }
+  .opt-btn .opt-letter {
+    width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0;
+    background: var(--card); border: 1.5px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Orbitron', sans-serif; font-size: .7rem; font-weight: 700;
+    color: var(--muted); transition: all .2s;
+  }
+  .opt-btn:not(.answered):hover {
+    background: rgba(0,198,255,.07); border-color: var(--accent);
+    transform: translateX(4px);
+  }
+  .opt-btn:not(.answered):hover .opt-letter { border-color: var(--accent); color: var(--accent); }
+  .opt-btn.correct { background: rgba(0,230,118,.12); border-color: var(--correct); }
+  .opt-btn.correct .opt-letter { background: var(--correct); border-color: var(--correct); color: #000; }
+  .opt-btn.wrong { background: rgba(255,61,107,.1); border-color: var(--wrong); }
+  .opt-btn.wrong .opt-letter { background: var(--wrong); border-color: var(--wrong); color: #fff; }
+  .opt-btn.answered { cursor: default; }
+
+  .explanation {
+    margin-top: 1.2rem; padding: 1rem 1.2rem;
+    background: rgba(0,198,255,.06); border-left: 3px solid var(--accent);
+    border-radius: 0 10px 10px 0; font-size: .9rem; color: #a8c8e8; line-height: 1.6;
+    animation: fadeUp .3s ease;
+  }
+  .explanation strong { color: var(--accent); }
+
+  .nav-row {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-top: 1.8rem; gap: 1rem;
+  }
+  .btn-nav {
+    background: var(--surface); border: 1.5px solid var(--border);
+    color: var(--text); border-radius: 10px; padding: .7rem 1.4rem;
+    font-family: 'Exo 2', sans-serif; font-size: .9rem; font-weight: 600;
+    cursor: pointer; transition: all .2s;
+  }
+  .btn-nav:hover { border-color: var(--accent); color: var(--accent); }
+  .btn-next {
+    background: linear-gradient(135deg, var(--accent2), var(--accent));
+    color: #fff; border: none; border-radius: 10px;
+    padding: .75rem 2rem; font-family: 'Orbitron', sans-serif;
+    font-size: .85rem; font-weight: 700; letter-spacing: .08em;
+    cursor: pointer; transition: all .2s; box-shadow: var(--glow);
+  }
+  .btn-next:hover { transform: translateY(-2px); box-shadow: 0 0 30px rgba(0,198,255,.4); }
+  .btn-next:disabled { opacity: .4; cursor: not-allowed; transform: none; box-shadow: none; }
+
+  /* ── RESULTS SCREEN ── */
+  #result-screen { display: none; min-height: 100vh; padding: 2rem; }
+  .result-inner { max-width: 700px; margin: 0 auto; text-align: center; }
+  .result-badge {
+    font-family: 'Orbitron', sans-serif; font-size: .8rem; font-weight: 700;
+    letter-spacing: .15em; color: var(--gold); margin-bottom: 1rem;
+  }
+  .result-title {
+    font-family: 'Orbitron', sans-serif; font-size: clamp(1.8rem, 5vw, 3rem);
+    font-weight: 900; margin-bottom: .5rem;
+  }
+  .score-circle {
+    width: 180px; height: 180px; border-radius: 50%; margin: 2rem auto;
+    background: conic-gradient(var(--accent) calc(var(--pct) * 3.6deg), var(--border) 0deg);
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: var(--glow), 0 0 60px rgba(0,198,255,.2);
+    position: relative;
+  }
+  .score-circle::before {
+    content: ''; position: absolute; inset: 12px; border-radius: 50%;
+    background: var(--bg);
+  }
+  .score-inner {
+    position: relative; z-index: 1; text-align: center;
+  }
+  .score-pct {
+    font-family: 'Orbitron', sans-serif; font-size: 2.4rem; font-weight: 900;
+    color: var(--accent); display: block;
+  }
+  .score-lbl { font-size: .75rem; color: var(--muted); letter-spacing: .1em; text-transform: uppercase; }
+  .result-stats {
+    display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; margin-bottom: 2rem;
+  }
+  .r-stat {
+    background: var(--card); border: 1px solid var(--border); border-radius: 14px;
+    padding: 1rem 1.5rem; min-width: 120px;
+  }
+  .r-stat .rv { font-family: 'Orbitron', sans-serif; font-size: 1.7rem; font-weight: 900; display: block; }
+  .r-stat .rl { font-size: .72rem; color: var(--muted); letter-spacing: .08em; text-transform: uppercase; }
+  .rv.green { color: var(--correct); }
+  .rv.red { color: var(--wrong); }
+  .rv.blue { color: var(--accent); }
+
+  .grade-box {
+    background: var(--card); border: 1px solid var(--border); border-radius: 16px;
+    padding: 1.2rem 2rem; margin-bottom: 2rem; display: inline-block;
+  }
+  .grade-label { font-size: .8rem; color: var(--muted); letter-spacing: .1em; text-transform: uppercase; margin-bottom: .3rem; }
+  .grade-value { font-family: 'Orbitron', sans-serif; font-size: 1.4rem; font-weight: 900; color: var(--gold); }
+
+  .btn-retry {
+    background: linear-gradient(135deg, var(--accent2), var(--accent));
+    color: #fff; border: none; cursor: pointer;
+    font-family: 'Orbitron', sans-serif; font-size: .95rem; font-weight: 700;
+    letter-spacing: .1em; padding: .9rem 2.5rem; border-radius: 50px;
+    box-shadow: var(--glow); transition: all .2s; margin: .4rem;
+  }
+  .btn-retry:hover { transform: translateY(-3px); box-shadow: 0 0 40px rgba(0,198,255,.5); }
+  .btn-outline {
+    background: transparent; border: 1.5px solid var(--border); color: var(--text);
+    cursor: pointer; font-family: 'Exo 2', sans-serif; font-size: .95rem; font-weight: 600;
+    padding: .9rem 2.5rem; border-radius: 50px; transition: all .2s; margin: .4rem;
+  }
+  .btn-outline:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* Review list */
+  .review-section { margin-top: 3rem; text-align: left; }
+  .review-title {
+    font-family: 'Orbitron', sans-serif; font-size: 1rem; font-weight: 700;
+    color: var(--accent); margin-bottom: 1.2rem; letter-spacing: .08em;
+  }
+  .review-item {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 14px; padding: 1.2rem; margin-bottom: .9rem;
+  }
+  .review-item .ri-q { font-size: .9rem; color: var(--text); margin-bottom: .6rem; line-height: 1.5; }
+  .review-item .ri-ans { font-size: .82rem; margin-bottom: .3rem; }
+  .ri-correct { color: var(--correct); }
+  .ri-wrong { color: var(--wrong); }
+  .ri-topic {
+    font-size: .7rem; color: var(--muted); text-transform: uppercase;
+    letter-spacing: .08em; margin-bottom: .4rem;
+  }
+
+  @media(max-width:500px) {
+    .question-card { padding: 1.2rem; }
+    .q-text { font-size: 1rem; }
+    .opt-btn { font-size: .88rem; padding: .75rem 1rem; }
+  }
+</style>
+</head>
+<body>
+<div id="app">
+
+<!-- START -->
+<div id="start-screen">
+  <div class="logo-badge">⚛ JAMB PREP 2025</div>
+  <h1 class="start-title">PHYSICS<br>QUIZ</h1>
+  <p class="start-sub">Master JAMB Physics with 100 exam-style questions spanning all major topics.</p>
+  <div class="stats-row">
+    <div class="stat-box"><span class="val">100</span><span class="lbl">Questions</span></div>
+    <div class="stat-box"><span class="val">90</span><span class="lbl">Minutes</span></div>
+    <div class="stat-box"><span class="val">1pt</span><span class="lbl">Per Answer</span></div>
+  </div>
+  <button class="btn-start" onclick="startQuiz()">START QUIZ →</button>
+</div>
+
+<!-- QUIZ -->
+<div id="quiz-screen">
+  <div class="quiz-header">
+    <span class="q-counter" id="q-counter">Q 1 / 100</span>
+    <div class="progress-bar-wrap"><div class="progress-bar-fill" id="progress-fill" style="width:1%"></div></div>
+    <span class="score-live" id="score-live">Score: 0</span>
+    <span class="timer-badge" id="timer-badge">90:00</span>
+  </div>
+  <div class="quiz-body">
+    <div class="question-card" id="question-card"></div>
+    <div class="nav-row">
+      <button class="btn-nav" onclick="prevQ()">← Prev</button>
+      <button class="btn-next" id="btn-next" onclick="nextQ()" disabled>Next →</button>
+    </div>
+  </div>
+</div>
+
+<!-- RESULTS -->
+<div id="result-screen">
+  <div class="result-inner">
+    <div class="result-badge">⚡ QUIZ COMPLETE</div>
+    <h2 class="result-title" id="result-title">Well Done!</h2>
+    <div class="score-circle" id="score-circle">
+      <div class="score-inner">
+        <span class="score-pct" id="score-pct">0%</span>
+        <span class="score-lbl">Score</span>
+      </div>
+    </div>
+    <div class="result-stats">
+      <div class="r-stat"><span class="rv green" id="r-correct">0</span><span class="rl">Correct</span></div>
+      <div class="r-stat"><span class="rv red" id="r-wrong">0</span><span class="rl">Wrong</span></div>
+      <div class="r-stat"><span class="rv blue" id="r-skipped">0</span><span class="rl">Skipped</span></div>
+    </div>
+    <div class="grade-box">
+      <div class="grade-label">JAMB Grade</div>
+      <div class="grade-value" id="r-grade">—</div>
+    </div>
+    <br>
+    <button class="btn-retry" onclick="retryQuiz()">↺ Retry Quiz</button>
+    <button class="btn-outline" onclick="showReview()">Review Answers</button>
+    <div class="review-section" id="review-section" style="display:none"></div>
+  </div>
+</div>
+
+</div>
+<script>
+const QUESTIONS = [
+  // ── MECHANICS ──
+  {t:"Mechanics", q:"A car accelerates uniformly from rest to 20 m/s in 5 s. What is its acceleration?", o:["2 m/s²","4 m/s²","5 m/s²","10 m/s²"], a:1, e:"a = Δv/t = 20/5 = 4 m/s²"},
+  {t:"Mechanics", q:"A body thrown vertically upward with 30 m/s. How high does it reach? (g = 10 m/s²)", o:["30 m","45 m","60 m","90 m"], a:1, e:"h = v²/2g = 900/20 = 45 m"},
+  {t:"Mechanics", q:"Newton's first law describes:", o:["Inertia","Momentum","Force","Energy"], a:0, e:"Newton's 1st law states an object remains at rest or uniform motion unless acted upon by a net force — this is the law of inertia."},
+  {t:"Mechanics", q:"A 5 kg object accelerates at 3 m/s². The net force is:", o:["8 N","15 N","1.67 N","2 N"], a:1, e:"F = ma = 5 × 3 = 15 N"},
+  {t:"Mechanics", q:"The unit of momentum is:", o:["N","kg·m/s","J","W"], a:1, e:"Momentum p = mv, so its unit is kg·m/s."},
+  {t:"Mechanics", q:"A ball of mass 2 kg moving at 4 m/s collides and sticks to a 2 kg stationary ball. Their common velocity is:", o:["4 m/s","2 m/s","1 m/s","3 m/s"], a:1, e:"By conservation of momentum: 2×4 = 4×v → v = 2 m/s"},
+  {t:"Mechanics", q:"The principle of conservation of linear momentum applies when:", o:["Net external force is zero","Net force is maximum","Bodies are at rest","Kinetic energy is conserved"], a:0, e:"Momentum is conserved when the net external force on the system is zero."},
+  {t:"Mechanics", q:"Which of the following is a scalar quantity?", o:["Velocity","Displacement","Speed","Force"], a:2, e:"Speed has magnitude only, making it a scalar. Velocity, displacement, and force are vectors."},
+  {t:"Mechanics", q:"A projectile is fired horizontally at 20 m/s from a cliff 80 m high. How long does it take to hit the ground? (g = 10 m/s²)", o:["2 s","4 s","8 s","16 s"], a:1, e:"h = ½gt² → 80 = ½×10×t² → t² = 16 → t = 4 s"},
+  {t:"Mechanics", q:"A body is in equilibrium when:", o:["It moves with uniform velocity","The net force and net torque on it are both zero","It accelerates uniformly","Its speed is constant"], a:1, e:"Equilibrium requires zero net force (translational) AND zero net torque (rotational)."},
+  {t:"Mechanics", q:"The work done by a force is zero when:", o:["Force is large","Displacement is perpendicular to force","Mass is large","Velocity is zero"], a:1, e:"W = Fd cosθ; when θ = 90°, cos90° = 0, so W = 0."},
+  {t:"Mechanics", q:"Power is defined as:", o:["Force × distance","Work / time","Mass × acceleration","Energy × time"], a:1, e:"Power = Work done per unit time (W = J/s)."},
+  {t:"Mechanics", q:"A 10 kg object is lifted 5 m. The potential energy gained is (g = 10 m/s²):", o:["50 J","100 J","500 J","1000 J"], a:2, e:"PE = mgh = 10 × 10 × 5 = 500 J"},
+  {t:"Mechanics", q:"Friction between two surfaces depends on:", o:["Area of contact only","Normal reaction and coefficient of friction","Speed only","Mass only"], a:1, e:"F = μN — friction depends on coefficient of friction (μ) and normal force (N)."},
+  {t:"Mechanics", q:"A wheel makes 600 revolutions per minute. Its angular velocity in rad/s is:", o:["10π","20π","30π","60π"], a:1, e:"ω = 600 × 2π/60 = 20π rad/s"},
+
+  // ── WAVES & SOUND ──
+  {t:"Waves & Sound", q:"The speed of sound in air at 0°C is approximately:", o:["300 m/s","330 m/s","340 m/s","350 m/s"], a:1, e:"Speed of sound in air at 0°C ≈ 330 m/s."},
+  {t:"Waves & Sound", q:"The frequency of a wave is 500 Hz and its wavelength is 0.68 m. Its speed is:", o:["300 m/s","340 m/s","500 m/s","680 m/s"], a:1, e:"v = fλ = 500 × 0.68 = 340 m/s"},
+  {t:"Waves & Sound", q:"Resonance occurs when:", o:["Amplitude is maximum","Frequency of applied force equals natural frequency","Wavelength equals amplitude","Period is zero"], a:1, e:"Resonance happens when the driving frequency matches the natural frequency of the system."},
+  {t:"Waves & Sound", q:"A stationary wave is formed by:", o:["Two waves of different amplitudes","Superposition of two waves travelling in opposite directions","A single progressive wave","Refraction of sound"], a:1, e:"Standing waves result from the superposition of two identical waves moving in opposite directions."},
+  {t:"Waves & Sound", q:"The property of sound that is determined by its frequency is:", o:["Loudness","Pitch","Timbre","Intensity"], a:1, e:"Pitch is the perceived quality corresponding to frequency — higher frequency = higher pitch."},
+  {t:"Waves & Sound", q:"The Doppler effect refers to:", o:["Diffraction of sound","Change in observed frequency due to relative motion","Reflection of light","Polarisation of sound"], a:1, e:"The Doppler effect is the change in frequency (or pitch) observed when a source or observer moves relative to the medium."},
+  {t:"Waves & Sound", q:"Which of these waves cannot be polarised?", o:["Radio waves","Light waves","Sound waves","Microwaves"], a:2, e:"Polarisation requires transverse waves. Sound is longitudinal and cannot be polarised."},
+  {t:"Waves & Sound", q:"The time taken for one complete oscillation is called:", o:["Frequency","Amplitude","Period","Wavelength"], a:2, e:"The period T is the time for one complete cycle."},
+  {t:"Waves & Sound", q:"An echo is caused by:", o:["Refraction of sound","Reflection of sound","Interference of sound","Diffraction of sound"], a:1, e:"An echo is reflected sound that reaches the listener after a time delay."},
+  {t:"Waves & Sound", q:"The intensity of sound is measured in:", o:["Hertz","Watts per square metre","Metre","Newtons"], a:1, e:"Sound intensity = power per unit area, unit W/m²."},
+
+  // ── LIGHT & OPTICS ──
+  {t:"Light & Optics", q:"The speed of light in vacuum is approximately:", o:["3×10⁶ m/s","3×10⁸ m/s","3×10¹⁰ m/s","3×10⁴ m/s"], a:1, e:"c ≈ 3 × 10⁸ m/s in vacuum."},
+  {t:"Light & Optics", q:"Snell's law relates:", o:["Frequency and wavelength","Angle of incidence and angle of refraction","Amplitude and intensity","Speed and frequency"], a:1, e:"Snell's law: n₁sinθ₁ = n₂sinθ₂ — relates angles at an interface between two media."},
+  {t:"Light & Optics", q:"A convex lens has a focal length of 20 cm. An object is placed 30 cm from the lens. The image distance is:", o:["60 cm","30 cm","20 cm","15 cm"], a:0, e:"1/v − 1/u = 1/f → 1/v = 1/20 + 1/30 = 5/60 → v = 60 cm"},
+  {t:"Light & Optics", q:"Total internal reflection occurs when:", o:["Angle of incidence < critical angle","Angle of incidence > critical angle","Light moves from less dense to denser medium","Refraction index is 1"], a:1, e:"Total internal reflection requires light to travel from denser to less dense medium at an angle exceeding the critical angle."},
+  {t:"Light & Optics", q:"Dispersion of white light by a prism is due to:", o:["Reflection","Polarisation","Different refractive indices for different colours","Diffraction"], a:2, e:"Different wavelengths (colours) refract by different amounts, splitting white light into a spectrum."},
+  {t:"Light & Optics", q:"A concave mirror produces a virtual, erect, magnified image when the object is:", o:["Beyond the centre of curvature","At the focus","Between focus and pole","At the centre of curvature"], a:2, e:"A concave mirror produces a virtual, magnified image when the object is between the focal point and the pole."},
+  {t:"Light & Optics", q:"The critical angle for a medium is 42°. Its refractive index is approximately:", o:["1.49","0.67","1.33","1.73"], a:0, e:"n = 1/sin(c) = 1/sin42° ≈ 1/0.669 ≈ 1.49"},
+  {t:"Light & Optics", q:"Optical fibre works on the principle of:", o:["Diffraction","Refraction","Total internal reflection","Polarisation"], a:2, e:"Optical fibres use total internal reflection to transmit light with minimal loss."},
+  {t:"Light & Optics", q:"The power of a lens is the:", o:["Reciprocal of focal length in metres","Product of focal length and refractive index","Ratio of image to object distance","Square of focal length"], a:0, e:"Power P = 1/f (in metres), measured in dioptres (D)."},
+  {t:"Light & Optics", q:"Young's double-slit experiment demonstrates:", o:["Reflection","Refraction","Polarisation","Interference"], a:3, e:"Young's double-slit experiment is the classic demonstration of the wave nature of light through interference."},
+
+  // ── ELECTRICITY ──
+  {t:"Electricity", q:"Ohm's law states that:", o:["V = IR","V = I/R","I = VR","R = VI"], a:0, e:"V = IR — voltage equals current multiplied by resistance."},
+  {t:"Electricity", q:"Three resistors of 2Ω each are connected in parallel. The equivalent resistance is:", o:["6Ω","2/3 Ω","1Ω","3Ω"], a:1, e:"1/R = 1/2 + 1/2 + 1/2 = 3/2 → R = 2/3 Ω"},
+  {t:"Electricity", q:"The SI unit of electric charge is:", o:["Ampere","Volt","Coulomb","Ohm"], a:2, e:"The coulomb (C) is the SI unit of electric charge."},
+  {t:"Electricity", q:"Electric power is given by:", o:["P = V/I","P = VI","P = V + I","P = V − I"], a:1, e:"P = VI = I²R = V²/R"},
+  {t:"Electricity", q:"A 60 W bulb is used for 5 hours. The energy consumed in kWh is:", o:["0.3 kWh","3 kWh","300 kWh","30 kWh"], a:0, e:"E = P×t = 60W × 5h = 300 Wh = 0.3 kWh"},
+  {t:"Electricity", q:"The electromotive force (EMF) of a cell is:", o:["Current through the cell","Work done per unit charge by the cell","Resistance of the cell","Voltage drop across external resistance"], a:1, e:"EMF = total work done per unit charge (including internal resistance losses)."},
+  {t:"Electricity", q:"In a series circuit, the current:", o:["Divides at each component","Remains the same throughout","Is maximum at the battery","Decreases as resistance increases"], a:1, e:"In a series circuit, the same current flows through all components."},
+  {t:"Electricity", q:"The resistance of a conductor depends on:", o:["Length, cross-sectional area, and resistivity","Mass and density","Temperature only","Voltage only"], a:0, e:"R = ρL/A — resistance depends on resistivity (ρ), length (L), and cross-sectional area (A)."},
+  {t:"Electricity", q:"Kirchhoff's current law states:", o:["Sum of currents at a junction is zero","Sum of voltages in a loop is zero","Current equals voltage divided by resistance","Power equals current squared times resistance"], a:0, e:"KCL: The algebraic sum of currents at any junction equals zero (charge conservation)."},
+  {t:"Electricity", q:"A capacitor stores energy in the form of:", o:["Magnetic field","Kinetic energy","Electric field","Chemical energy"], a:2, e:"Capacitors store energy in the electric field between their plates."},
+
+  // ── MAGNETISM & EM INDUCTION ──
+  {t:"Magnetism", q:"The force on a current-carrying conductor in a magnetic field is given by:", o:["F = BIL","F = qE","F = mv²/r","F = kq₁q₂/r²"], a:0, e:"F = BIL sinθ — the magnetic force on a current-carrying conductor."},
+  {t:"Magnetism", q:"Fleming's left-hand rule is used to determine:", o:["Direction of induced EMF","Direction of force on a current in a magnetic field","Polarity of a magnet","Direction of magnetic field around a wire"], a:1, e:"Fleming's left-hand rule gives the direction of force (motor effect) on a current-carrying conductor."},
+  {t:"Magnetism", q:"Faraday's law of electromagnetic induction states:", o:["EMF is proportional to rate of change of magnetic flux","Current produces a magnetic field","Force equals mass times acceleration","Charge is conserved"], a:0, e:"Faraday's law: induced EMF = −dΦ/dt (rate of change of magnetic flux linkage)."},
+  {t:"Magnetism", q:"Lenz's law is a consequence of:", o:["Newton's second law","Conservation of energy","Conservation of charge","Hooke's law"], a:1, e:"Lenz's law (the induced current opposes the change) follows from conservation of energy."},
+  {t:"Magnetism", q:"A transformer steps up voltage. This means:", o:["Primary turns > secondary turns","Secondary turns > primary turns","Primary and secondary have equal turns","Current is increased"], a:1, e:"Step-up: Vs/Vp = Ns/Np > 1, so Ns > Np."},
+  {t:"Magnetism", q:"The SI unit of magnetic flux density is:", o:["Weber","Tesla","Henry","Gauss"], a:1, e:"Magnetic flux density B is measured in Tesla (T)."},
+  {t:"Magnetism", q:"An alternating current has a peak voltage of 311 V. Its RMS voltage is approximately:", o:["220 V","311 V","440 V","156 V"], a:0, e:"V_rms = V_peak/√2 = 311/1.414 ≈ 220 V"},
+  {t:"Magnetism", q:"The core of a transformer is laminated to:", o:["Increase voltage","Reduce eddy current losses","Improve insulation","Increase resistance"], a:1, e:"Lamination reduces eddy current losses by providing thin insulated layers."},
+  {t:"Magnetism", q:"A solenoid is a:", o:["Single wire","Coil of wire forming a cylindrical shape","Permanent magnet","Capacitor"], a:1, e:"A solenoid is a helical coil of wire that creates a uniform magnetic field inside when current flows."},
+  {t:"Magnetism", q:"Which device converts mechanical energy to electrical energy?", o:["Motor","Transformer","Generator","Capacitor"], a:2, e:"A generator (dynamo) converts mechanical energy to electrical energy through electromagnetic induction."},
+
+  // ── HEAT & THERMODYNAMICS ──
+  {t:"Heat & Thermo", q:"The specific heat capacity of water is 4200 J/kg·K. Energy needed to raise 2 kg by 10°C:", o:["4200 J","8400 J","42000 J","84000 J"], a:3, e:"Q = mcΔT = 2 × 4200 × 10 = 84,000 J"},
+  {t:"Heat & Thermo", q:"Absolute zero on the Kelvin scale is:", o:["0°C","−100°C","−273°C","−373°C"], a:2, e:"0 K = −273.15°C ≈ −273°C"},
+  {t:"Heat & Thermo", q:"The process by which heat travels through a vacuum is:", o:["Conduction","Convection","Radiation","Advection"], a:2, e:"Radiation transfers heat by electromagnetic waves and requires no medium."},
+  {t:"Heat & Thermo", q:"Latent heat of fusion is the heat required to:", o:["Raise temperature by 1°C","Change solid to liquid without temperature change","Vaporise a liquid","Cool a gas"], a:1, e:"Latent heat of fusion converts solid to liquid at constant temperature."},
+  {t:"Heat & Thermo", q:"An ideal gas obeys:", o:["PV = nRT","PV = constant only","P/T = constant only","V/T = constant only"], a:0, e:"The ideal gas equation is PV = nRT, combining Boyle's and Charles' laws."},
+  {t:"Heat & Thermo", q:"Boyle's law states that (at constant temperature):", o:["P ∝ V","P ∝ 1/V","P ∝ T","V ∝ T"], a:1, e:"Boyle's law: P ∝ 1/V at constant temperature → PV = constant."},
+  {t:"Heat & Thermo", q:"The first law of thermodynamics is essentially:", o:["Entropy always increases","Conservation of energy","Newton's third law","Ohm's law"], a:1, e:"1st law of thermodynamics: ΔU = Q − W (energy conservation for thermodynamic systems)."},
+  {t:"Heat & Thermo", q:"The efficiency of a heat engine operating between 500 K and 300 K is:", o:["40%","60%","50%","30%"], a:0, e:"η = 1 − T_cold/T_hot = 1 − 300/500 = 0.4 = 40%"},
+  {t:"Heat & Thermo", q:"Which of the following is the best thermal conductor?", o:["Wood","Glass","Copper","Rubber"], a:2, e:"Copper is an excellent thermal conductor due to free electrons transferring energy."},
+  {t:"Heat & Thermo", q:"Greenhouse effect is mainly due to:", o:["Reflection of UV rays","Absorption and re-emission of infrared radiation by atmospheric gases","Diffraction of light","Nuclear reactions"], a:1, e:"Greenhouse gases (CO₂, H₂O vapour) absorb infrared radiation from Earth's surface and re-emit it, trapping heat."},
+
+  // ── MODERN PHYSICS ──
+  {t:"Modern Physics", q:"The photoelectric effect is explained by:", o:["Wave theory","Particle theory (photons)","Interference","Diffraction"], a:1, e:"Einstein explained the photoelectric effect using photons (quanta of light energy), earning him the Nobel Prize."},
+  {t:"Modern Physics", q:"The energy of a photon is given by:", o:["E = mc²","E = hf","E = ½mv²","E = kqq/r²"], a:1, e:"E = hf where h = Planck's constant and f = frequency."},
+  {t:"Modern Physics", q:"Alpha particles are:", o:["High-energy electrons","Helium-4 nuclei","Gamma ray photons","Neutrons"], a:1, e:"Alpha particles consist of 2 protons + 2 neutrons (helium-4 nucleus, ²He⁴)."},
+  {t:"Modern Physics", q:"The half-life of a radioactive substance is the time for:", o:["All atoms to decay","Half the atoms to decay","Activity to double","Mass to become zero"], a:1, e:"Half-life T½ is the time for half the radioactive nuclei in a sample to decay."},
+  {t:"Modern Physics", q:"Nuclear fission involves:", o:["Combining small nuclei","Splitting a heavy nucleus","Emission of photons","Electron capture"], a:1, e:"Fission is the splitting of a heavy nucleus (like U-235) into smaller nuclei, releasing energy."},
+  {t:"Modern Physics", q:"Which radiation has the greatest penetrating power?", o:["Alpha","Beta","Gamma","X-ray"], a:2, e:"Gamma rays are the most penetrating — they require dense materials like lead to attenuate significantly."},
+  {t:"Modern Physics", q:"In β⁻ decay, a nucleus emits:", o:["A helium nucleus","A high-energy electron","A photon","A neutron"], a:1, e:"In β⁻ decay, a neutron converts to a proton and emits an electron (and antineutrino)."},
+  {t:"Modern Physics", q:"The de Broglie wavelength of a particle is:", o:["λ = h/mv","λ = mv/h","λ = hv/m","λ = m/hv"], a:0, e:"de Broglie: λ = h/p = h/(mv) — matter has wave properties."},
+  {t:"Modern Physics", q:"X-rays are produced when:", o:["High-speed electrons are suddenly decelerated","Alpha particles are emitted","Photons are absorbed","Neutrons collide"], a:0, e:"X-rays are produced by rapid deceleration of high-energy electrons (bremsstrahlung) or by inner-shell electron transitions."},
+  {t:"Modern Physics", q:"Pair production involves:", o:["Two electrons combining","A photon creating an electron-positron pair","A neutron splitting","Alpha decay"], a:1, e:"Pair production: a gamma photon converts to an electron–positron pair near a nucleus (E = 2m₀c²)."},
+
+  // ── GRAVITATIONAL & CIRCULAR MOTION ──
+  {t:"Gravitation", q:"The gravitational force between two masses is:", o:["Directly proportional to product of masses and inversely to square of distance","Directly proportional to distance","Inversely proportional to mass","Independent of distance"], a:0, e:"Newton's law: F = Gm₁m₂/r²"},
+  {t:"Gravitation", q:"The escape velocity from Earth's surface is approximately:", o:["7.9 km/s","11.2 km/s","15.0 km/s","3.0 km/s"], a:1, e:"Escape velocity v_e = √(2gR) ≈ 11.2 km/s for Earth."},
+  {t:"Gravitation", q:"A satellite in geostationary orbit has a period of:", o:["1 hour","12 hours","24 hours","7 days"], a:2, e:"Geostationary satellites orbit with a 24-hour (sidereal day) period to remain stationary relative to Earth's surface."},
+  {t:"Gravitation", q:"Centripetal acceleration is directed:", o:["Tangentially","Away from centre","Toward the centre","Downward"], a:2, e:"Centripetal acceleration always points toward the centre of the circular path."},
+  {t:"Gravitation", q:"The gravitational potential energy at the Earth's surface relative to infinity is:", o:["Positive","Zero","Negative","Infinity"], a:2, e:"Gravitational PE = −GMm/r; it is negative, becoming zero at infinity."},
+  {t:"Gravitation", q:"Kepler's third law states:", o:["Planets move in ellipses","Equal areas in equal times","T² ∝ r³","Gravity obeys inverse square law"], a:2, e:"Kepler's 3rd law: T² ∝ a³ (period² proportional to semi-major axis³)."},
+
+  // ── FLUID MECHANICS ──
+  {t:"Fluids", q:"Archimedes' principle states that a body immersed in fluid experiences an upthrust equal to:", o:["Weight of the body","Mass of fluid displaced","Weight of fluid displaced","Volume of body"], a:2, e:"Upthrust = weight of fluid displaced by the object."},
+  {t:"Fluids", q:"Bernoulli's principle relates:", o:["Speed and pressure in a fluid","Temperature and volume","Force and acceleration","Mass and density"], a:0, e:"Bernoulli's principle: in a flowing fluid, increased speed leads to decreased pressure."},
+  {t:"Fluids", q:"The pressure at the bottom of a liquid column is:", o:["P = ρg","P = ρgh","P = mg/A","P = F/V"], a:1, e:"P = ρgh — pressure increases with depth, density, and gravitational acceleration."},
+  {t:"Fluids", q:"Viscosity is a measure of:", o:["Density of fluid","Resistance of fluid to flow","Buoyancy","Surface tension"], a:1, e:"Viscosity is the internal resistance of a fluid to flow (thickness or stickiness)."},
+  {t:"Fluids", q:"Surface tension is caused by:", o:["Gravity","Cohesive forces between liquid molecules at the surface","Adhesive forces between liquid and container","Temperature differences"], a:1, e:"Surface tension arises from net inward cohesive forces on surface molecules."},
+
+  // ── SIMPLE HARMONIC MOTION ──
+  {t:"SHM", q:"In simple harmonic motion, acceleration is:", o:["Constant","Proportional to displacement and directed away from equilibrium","Proportional to displacement and directed toward equilibrium","Zero"], a:2, e:"SHM: a = −ω²x — acceleration proportional to displacement, directed toward equilibrium."},
+  {t:"SHM", q:"The period of a simple pendulum depends on:", o:["Mass of the bob","Amplitude only","Length and g","Frequency only"], a:2, e:"T = 2π√(L/g) — period depends on length L and gravitational acceleration g."},
+  {t:"SHM", q:"At maximum displacement in SHM:", o:["KE is maximum","PE is maximum","Both KE and PE are equal","Velocity is maximum"], a:1, e:"At maximum displacement (amplitude), velocity = 0, so KE = 0 and PE is at maximum."},
+  {t:"SHM", q:"The angular frequency ω of SHM is related to period T by:", o:["ω = T","ω = 2π/T","ω = T/2π","ω = 1/T"], a:1, e:"ω = 2π/T (or ω = 2πf)"},
+  {t:"SHM", q:"Damped oscillation occurs when:", o:["Amplitude increases","Amplitude decreases due to energy dissipation","Period changes","Frequency doubles"], a:1, e:"Damping removes energy from the oscillating system, causing amplitude to decrease over time."},
+
+  // ── ELECTROSTATICS ──
+  {t:"Electrostatics", q:"Coulomb's law states the force between charges is:", o:["F = kq₁q₂/r","F = kq₁q₂/r²","F = q₁q₂/kr²","F = k(q₁+q₂)/r²"], a:1, e:"F = kq₁q₂/r² — Coulomb's law."},
+  {t:"Electrostatics", q:"Electric field lines always:", o:["Form closed loops","Run from negative to positive","Run from positive to negative charges","Cross each other"], a:2, e:"Electric field lines flow from positive to negative charges by convention."},
+  {t:"Electrostatics", q:"The capacitance of a parallel plate capacitor is increased by:", o:["Increasing plate separation","Decreasing area","Using a dielectric material","Reducing voltage"], a:2, e:"C = ε₀εᵣA/d — inserting a dielectric (εᵣ > 1) increases capacitance."},
+  {t:"Electrostatics", q:"The potential at a point due to a charge Q at distance r is:", o:["V = kQ/r²","V = kQ/r","V = kQ·r","V = Q/4πr²"], a:1, e:"V = kQ/r = Q/(4πε₀r)"},
+  {t:"Electrostatics", q:"A Van de Graaff generator builds up static charge by using:", o:["Electromagnetic induction","Electrostatic induction and a moving belt","Nuclear reactions","Chemical reactions"], a:1, e:"A Van de Graaff generator transfers charge using a moving rubber belt and metallic combs."},
+
+  // ── ELECTRONICS ──
+  {t:"Electronics", q:"A p-n junction diode allows current to flow:", o:["In both directions","Only in reverse bias","Only in forward bias","Only when heated"], a:2, e:"A diode conducts only in forward bias (p-side positive, n-side negative)."},
+  {t:"Electronics", q:"A transistor can be used as:", o:["Only a switch","Only an amplifier","Both a switch and an amplifier","A capacitor"], a:2, e:"Transistors function as both switches (digital circuits) and amplifiers (analogue circuits)."},
+  {t:"Electronics", q:"In a half-wave rectifier, the output frequency compared to the input is:", o:["Same","Double","Half","Four times"], a:0, e:"A half-wave rectifier passes only one half of each AC cycle, keeping the same frequency."},
+  {t:"Electronics", q:"Logic gate that gives output 1 only when all inputs are 1:", o:["OR","NOT","AND","XOR"], a:2, e:"AND gate: output is 1 only when ALL inputs are 1."},
+  {t:"Electronics", q:"A Zener diode is used mainly for:", o:["Amplification","Voltage regulation","Switching","Rectification"], a:1, e:"Zener diodes operate in reverse breakdown to maintain a constant reference voltage (voltage regulation)."},
+
+  // ── MISCELLANEOUS / GENERAL ──
+  {t:"General Physics", q:"The dimension of energy is:", o:["MLT⁻²","ML²T⁻²","ML²T⁻³","M²LT⁻²"], a:1, e:"Energy = force × distance = [MLT⁻²][L] = ML²T⁻²"},
+  {t:"General Physics", q:"The instrument used to measure atmospheric pressure is:", o:["Thermometer","Barometer","Manometer","Hydrometer"], a:1, e:"A barometer measures atmospheric pressure."},
+  {t:"General Physics", q:"Vernier calipers can measure to the nearest:", o:["1 mm","0.1 mm","0.01 mm","0.001 mm"], a:1, e:"A vernier caliper typically reads to 0.1 mm (or 0.02 mm for 50-division verniers)."},
+  {t:"General Physics", q:"The principle of superposition states:", o:["Waves cancel always","Resultant displacement equals vector sum of individual displacements","Waves speed up at interference","Amplitude doubles always"], a:1, e:"Superposition: when waves overlap, the total displacement is the vector sum of individual displacements."},
+  {t:"General Physics", q:"A fuse wire is made of material with:", o:["High melting point","Low melting point","High resistance and high melting point","Low resistance only"], a:1, e:"A fuse wire must melt (blow) quickly when current exceeds the safe limit — it has a low melting point."},
+  {t:"General Physics", q:"The standard form for the number 0.00045 is:", o:["4.5 × 10⁻⁴","4.5 × 10⁻³","4.5 × 10⁴","45 × 10⁻⁵"], a:0, e:"0.00045 = 4.5 × 10⁻⁴"},
+  {t:"General Physics", q:"The number of significant figures in 0.00340 is:", o:["2","3","4","5"], a:1, e:"0.00340 has 3 significant figures (3, 4, and the trailing zero after decimal)."},
+  {t:"General Physics", q:"The instrument that measures the relative density of a liquid is:", o:["Barometer","Hydrometer","Thermometer","Manometer"], a:1, e:"A hydrometer measures the relative density (specific gravity) of liquids."},
+  {t:"General Physics", q:"The refractive index of a medium is 1.5. The speed of light in the medium is (c = 3×10⁸ m/s):", o:["2×10⁸ m/s","4.5×10⁸ m/s","1.5×10⁸ m/s","3×10⁸ m/s"], a:0, e:"v = c/n = 3×10⁸/1.5 = 2×10⁸ m/s"},
+  {t:"General Physics", q:"Young's modulus measures:", o:["Shear stress","Tensile stress/strain ratio (stiffness)","Bulk modulus","Poisson's ratio"], a:1, e:"Young's modulus E = stress/strain — it quantifies a material's stiffness under tension/compression."},
+];
+
+// Shuffle helper
+function shuffle(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+let questions = [];
+let current = 0;
+let answers = []; // null = unanswered
+let score = 0;
+let timerInterval = null;
+let totalTime = 90 * 60; // seconds
+let timeLeft = totalTime;
+
+function startQuiz() {
+  questions = shuffle([...QUESTIONS]);
+  answers = new Array(questions.length).fill(null);
+  score = 0; current = 0; timeLeft = totalTime;
+  document.getElementById('start-screen').style.display = 'none';
+  document.getElementById('quiz-screen').style.display = 'block';
+  renderQuestion();
+  startTimer();
+}
+
+function startTimer() {
+  clearInterval(timerInterval);
+  timerInterval = setInterval(() => {
+    timeLeft--;
+    updateTimer();
+    if (timeLeft <= 0) { clearInterval(timerInterval); endQuiz(); }
+  }, 1000);
+}
+
+function updateTimer() {
+  const m = Math.floor(timeLeft / 60), s = timeLeft % 60;
+  const el = document.getElementById('timer-badge');
+  el.textContent = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+  el.classList.toggle('urgent', timeLeft <= 300);
+}
+
+function renderQuestion() {
+  const q = questions[current];
+  const answered = answers[current] !== null;
+  const pct = ((current + 1) / questions.length * 100).toFixed(1);
+
+  document.getElementById('q-counter').textContent = `Q ${current + 1} / ${questions.length}`;
+  document.getElementById('progress-fill').style.width = pct + '%';
+  document.getElementById('score-live').textContent = `Score: ${score}`;
+  document.getElementById('btn-next').disabled = !answered;
+
+  const letters = ['A','B','C','D'];
+  let optsHTML = q.o.map((opt, i) => {
+    let cls = 'opt-btn';
+    if (answered) {
+      cls += ' answered';
+      if (i === q.a) cls += ' correct';
+      else if (i === answers[current]) cls += ' wrong';
+    }
+    return `<button class="${cls}" onclick="selectAnswer(${i})" ${answered ? 'disabled' : ''}>
+      <span class="opt-letter">${letters[i]}</span>${opt}
+    </button>`;
+  }).join('');
+
+  let explHTML = '';
+  if (answered) {
+    explHTML = `<div class="explanation"><strong>💡 Explanation:</strong> ${q.e}</div>`;
+  }
+
+  document.getElementById('question-card').innerHTML = `
+    <div class="topic-tag">⚡ ${q.t}</div>
+    <div class="q-text"><strong>${current + 1}.</strong> ${q.q}</div>
+    <div class="options">${optsHTML}</div>
+    ${explHTML}
+  `;
+}
+
+function selectAnswer(i) {
+  if (answers[current] !== null) return;
+  answers[current] = i;
+  if (i === questions[current].a) score++;
+  document.getElementById('btn-next').disabled = false;
+  renderQuestion();
+}
+
+function nextQ() {
+  if (current < questions.length - 1) { current++; renderQuestion(); }
+  else endQuiz();
+}
+function prevQ() {
+  if (current > 0) { current--; renderQuestion(); }
+}
+
+function endQuiz() {
+  clearInterval(timerInterval);
+  document.getElementById('quiz-screen').style.display = 'none';
+  document.getElementById('result-screen').style.display = 'block';
+
+  const total = questions.length;
+  const correct = score;
+  const wrong = answers.filter((a, i) => a !== null && a !== questions[i].a).length;
+  const skipped = answers.filter(a => a === null).length;
+  const pct = Math.round(correct / total * 100);
+
+  document.getElementById('score-circle').style.setProperty('--pct', pct);
+  document.getElementById('score-pct').textContent = pct + '%';
+  document.getElementById('r-correct').textContent = correct;
+  document.getElementById('r-wrong').textContent = wrong;
+  document.getElementById('r-skipped').textContent = skipped;
+
+  let grade, title;
+  if (pct >= 80) { grade = 'DISTINCTION (A)'; title = 'Outstanding! 🏆'; }
+  else if (pct >= 65) { grade = 'CREDIT (B)'; title = 'Great Work! 🎉'; }
+  else if (pct >= 50) { grade = 'PASS (C)'; title = 'Good Effort! 👍'; }
+  else if (pct >= 40) { grade = 'PASS (D)'; title = 'Keep Practising!'; }
+  else { grade = 'FAIL (F)'; title = 'More Study Needed!'; }
+
+  document.getElementById('result-title').textContent = title;
+  document.getElementById('r-grade').textContent = grade;
+}
+
+function retryQuiz() {
+  document.getElementById('result-screen').style.display = 'none';
+  document.getElementById('review-section').style.display = 'none';
+  startQuiz();
+}
+
+function showReview() {
+  const sec = document.getElementById('review-section');
+  if (sec.style.display !== 'none') { sec.style.display = 'none'; return; }
+  const letters = ['A','B','C','D'];
+  let html = `<div class="review-title">📋 ANSWER REVIEW</div>`;
+  questions.forEach((q, i) => {
+    const userAns = answers[i];
+    const correct = userAns === q.a;
+    const status = userAns === null ? 'Skipped' : correct ? '✅ Correct' : '❌ Wrong';
+    const cls = userAns === null ? '' : correct ? 'ri-correct' : 'ri-wrong';
+    html += `<div class="review-item">
+      <div class="ri-topic">${q.t}</div>
+      <div class="ri-q"><strong>${i+1}.</strong> ${q.q}</div>
+      <div class="ri-ans ${cls}">${status} ${userAns !== null && !correct ? `— You chose: ${letters[userAns]}) ${q.o[userAns]}` : ''}</div>
+      ${!correct ? `<div class="ri-ans ri-correct">✔ Correct: ${letters[q.a]}) ${q.o[q.a]}</div>` : ''}
+      <div style="font-size:.8rem;color:#6b8cae;margin-top:.4rem">💡 ${q.e}</div>
+    </div>`;
+  });
+  sec.innerHTML = html;
+  sec.style.display = 'block';
+  sec.scrollIntoView({ behavior: 'smooth' });
+}
+</script>
+</body>
+</html>
